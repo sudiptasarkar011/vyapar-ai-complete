@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyapar AI - The MSME Business OS</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        h2 { margin-top: 0; color: var(--primary); }
+        
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;}
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        
+        button { background: var(--primary); color: white; border: none; padding: 12px; margin-top: 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
+        button:disabled { opacity: 0.7; }
+
+        .output-box { white-space: pre-wrap; background: #f1f5f9; padding: 20px; border-radius: 8px; min-height: 300px; font-family: 'Courier New', monospace; border-left: 4px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary); margin-bottom: 5px;">Vyapar AI 🤖</h1>
+        <p style="margin-top: 0; color: #64748b;">Autonomous Business Operating System</p>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Select Module</h2>
+            <select id="agentMode" onchange="updateForm()">
+                <option value="churn">1. Customer Retention (Churn)</option>
+                <option value="inventory">2. Smart Inventory</option>
+                <option value="leads">3. Lead Scoring</option>
+                <option value="expense">4. Expense Audit</option>
+            </select>
+
+            <hr style="border-top: 1px solid #eee; margin: 20px 0;">
+
+            <div id="dynamicInputs">
+                </div>
+
+            <button onclick="askAgent()" id="btn">🚀 Run Agent</button>
+        </div>
+
+        <div class="card">
+            <h2>Agent Action</h2>
+            <div id="loading" style="display:none; text-align:center; padding: 20px;">
+                <div style="font-size: 2rem;">🔄</div>
+                <p>Analyzing Data & Generating Strategy...</p>
+            </div>
+            <div class="output-box" id="output">Select a module to begin...</div>
+        </div>
+    </div>
+
+    <script>
+        const forms = {
+            churn: `
+                <h3>👤 Customer Details</h3>
+                <label>Customer Name</label><input type="text" id="p1" value="Amit Verma">
+                <label>Days Inactive</label><input type="number" id="p2" value="60">
+                <label>Support Tickets</label><input type="number" id="p3" value="5">
+                <label>Monthly Bill (₹)</label><input type="number" id="p4" value="2000">
+                <input type="hidden" id="query" value="Draft a retention email for this customer.">
+            `,
+            inventory: `
+                <h3>📦 Inventory Data</h3>
+                <label>Item Name</label><input type="text" id="p1" value="Basmati Rice (5kg)">
+                <label>Current Stock (Units)</label><input type="number" id="p2" value="15">
+                <label>Avg Daily Sales</label><input type="number" id="p3" value="5">
+                <input type="hidden" id="query" value="Check stock health and draft a supplier order if needed.">
+            `,
+            leads: `
+                <h3>🔥 Lead Details</h3>
+                <label>Company Name</label><input type="text" id="p1" value="Rahul Traders">
+                <label>Budget (₹)</label><input type="number" id="p2" value="60000">
+                <label>Urgency (1-10)</label><input type="number" id="p3" value="9">
+                <input type="hidden" id="query" value="Score this lead and draft a sales pitch.">
+            `,
+            expense: `
+                <h3>💸 Expense Entry</h3>
+                <label>Vendor Name</label><input type="text" id="p1" value="Unknown Vendor">
+                <label>Category</label><input type="text" id="p2" value="Office Supplies">
+                <label>Amount (₹)</label><input type="number" id="p3" value="8000">
+                <input type="hidden" id="query" value="Audit this expense for fraud risk.">
+            `
+        };
+
+        function updateForm() {
+            const mode = document.getElementById('agentMode').value;
+            document.getElementById('dynamicInputs').innerHTML = forms[mode];
+        }
+
+        async function askAgent() {
+            const mode = document.getElementById('agentMode').value;
+            const btn = document.getElementById('btn');
+            const output = document.getElementById('output');
+            const loader = document.getElementById('loading');
+            
+            btn.disabled = true;
+            output.style.display = 'none';
+            loader.style.display = 'block';
+
+            let payload = { query: document.getElementById('query').value, data: {} };
+
+            // Map inputs based on active mode
+            if(mode === 'churn') {
+                payload.data = {
+                    customerName: document.getElementById('p1').value,
+                    days_inactive: parseInt(document.getElementById('p2').value),
+                    support_tickets: parseInt(document.getElementById('p3').value),
+                    monthly_bill: parseInt(document.getElementById('p4').value)
+                };
+            } else if(mode === 'inventory') {
+                payload.data = {
+                    itemName: document.getElementById('p1').value,
+                    current_stock: parseInt(document.getElementById('p2').value),
+                    daily_sales_avg: parseInt(document.getElementById('p3').value)
+                };
+            } else if(mode === 'leads') {
+                payload.data = {
+                    leadName: document.getElementById('p1').value,
+                    budget: parseInt(document.getElementById('p2').value),
+                    urgency: parseInt(document.getElementById('p3').value)
+                };
+            } else if(mode === 'expense') {
+                payload.data = {
+                    vendor: document.getElementById('p1').value,
+                    category: document.getElementById('p2').value,
+                    amount: parseInt(document.getElementById('p3').value)
+                };
+            }
+
+            try {
+                const res = await fetch('http://localhost:3000/api/agent/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                output.innerText = json.response || json.error;
+            } catch (err) {
+                output.innerText = "Error connecting to Agent.";
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+                output.style.display = 'block';
+            }
+        }
+
+        // Init
+        updateForm();
+    </script>
+</body>
+</html>

@@ -4,66 +4,78 @@ import axios from 'axios';
 export class GeminiService {
 
     /**
-     * Helper: Calls the Python Microservice to predict churn risk.
-     * NOW UPDATED TO PORT 5001 to avoid macOS AirPlay conflicts.
+     * Universal Helper to call Python Service (Port 5001)
      */
-    private async checkChurnRisk(customerData: any) {
+    private async callPythonTool(endpoint: string, data: any) {
         try {
-            console.log("🔍 Connecting to Python Churn Service on Port 5001...");
-            
-            // calling the Python service on the new port
-            const response = await axios.post('http://localhost:5001/predict', customerData);
-            
-            console.log("✅ Risk Analysis Received:", response.data);
+            console.log(`🔍 Calling Python Tool: ${endpoint}...`);
+            const response = await axios.post(`http://localhost:5001/${endpoint}`, data);
+            console.log("✅ Tool Response:", response.data);
             return response.data;
         } catch (error) {
-            console.error("⚠️ Failed to connect to Python Churn Service:", error);
-            // Return a neutral fallback so the agent doesn't crash
-            return { status: "Unknown (Service Unavailable)", risk_score: 0 };
+            console.error(`⚠️ Failed to connect to ${endpoint}:`, error);
+            return null;
         }
     }
 
-    /**
-     * Main function: Orchestrates the AI response.
-     * 1. Checks risk (if data exists)
-     * 2. Prompts Gemini with the risk context
-     */
-    async generateBusinessResponse(userQuery: string, contextData?: any) {
+    async generateBusinessResponse(userQuery: string, contextData: any) {
         try {
-            let riskInfo = null;
+            let toolInsight = null;
+            let contextLabel = "General Context";
 
-            // INTELLIGENT ROUTING: 
-            // If the user provided customer data (like monthly_bill), auto-check risk.
-            if (contextData && (contextData.monthly_bill || contextData.days_inactive)) {
-                riskInfo = await this.checkChurnRisk(contextData);
+            // INTELLIGENT ROUTING LOGIC
+            // The Agent decides which "Tool" to pick based on the data provided
+            
+            // 1. CHURN MODE
+            if (contextData.days_inactive !== undefined) {
+                contextLabel = "Customer Retention Analysis";
+                toolInsight = await this.callPythonTool('predict', contextData);
+            }
+            // 2. INVENTORY MODE
+            else if (contextData.current_stock !== undefined) {
+                contextLabel = "Inventory Health Check";
+                toolInsight = await this.callPythonTool('predict-inventory', contextData);
+            }
+            // 3. SALES LEAD MODE
+            else if (contextData.budget !== undefined) {
+                contextLabel = "Lead Qualification Score";
+                toolInsight = await this.callPythonTool('score-lead', contextData);
+            }
+            // 4. EXPENSE AUDIT MODE
+            else if (contextData.amount !== undefined) {
+                contextLabel = "Expense Fraud Detection";
+                toolInsight = await this.callPythonTool('audit-expense', contextData);
             }
 
-            // Construct the sophisticated prompt
+            // Construct Prompt
             const prompt = `
-            ROLE: You are 'Vyapar AI', an intelligent business assistant for MSMEs in India.
+            ROLE: You are Vyapar AI, an autonomous business OS for MSMEs.
             
-            ${riskInfo ? `REAL-TIME RISK ANALYSIS (From Churn Model): 
-            - Risk Score: ${riskInfo.risk_score} (0-1 scale)
-            - Customer Status: ${riskInfo.status}
-            - ACTION REQUIRED: ${riskInfo.status === 'High Risk' ? 'Draft a retention offer immediately.' : 'Maintain standard engagement.'}` : ''}
+            CURRENT TASK: ${contextLabel}
             
-            CONTEXT DATA: ${contextData ? JSON.stringify(contextData) : 'No specific customer data provided.'}
+            TOOL INSIGHTS (From Python Model):
+            ${toolInsight ? JSON.stringify(toolInsight, null, 2) : 'No automated insight available.'}
             
-            USER QUERY: ${userQuery}
+            USER INPUT DATA: 
+            ${JSON.stringify(contextData)}
             
-            TASK: Provide a professional, actionable response. 
-            If the customer is 'High Risk', be empathetic and offer specific value (discounts/support) to keep them.
-            If drafting an email, keep it formatted cleanly.
+            USER INSTRUCTION: 
+            "${userQuery}"
+            
+            INSTRUCTIONS:
+            - Interpret the 'Tool Insights' for the user.
+            - If Status is 'Critical' or 'High Risk', be urgent and suggest a solution.
+            - If Status is 'Safe', be confirming.
+            - Format the response beautifully for a business dashboard.
             `;
 
-            // Call Gemini
             const result = await model.generateContent(prompt);
             const response = await result.response;
             return response.text();
 
         } catch (error) {
-            console.error("Gemini Interaction Error:", error);
-            throw new Error("Failed to process request with Vyapar AI.");
+            console.error("Gemini Error:", error);
+            throw new Error("Vyapar AI Brain Failure");
         }
     }
 }
