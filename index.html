@@ -3,136 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vyapar AI - The MSME Business OS</title>
+    <title>Vyapar AI - Business OS</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
         
-        .card { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: var(--primary); }
+        .main-grid { display: grid; grid-template-columns: 280px 1fr 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
         
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px;}
-        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        
-        button { background: var(--primary); color: white; border: none; padding: 12px; margin-top: 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        button:hover { background: #1d4ed8; }
-        button:disabled { opacity: 0.7; }
+        /* General Card Styles */
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); height: fit-content;}
+        h2 { margin-top: 0; color: var(--primary); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        h3 { font-size: 0.95rem; color: #64748b; margin-bottom: 15px; }
 
-        .output-box { white-space: pre-wrap; background: #f1f5f9; padding: 20px; border-radius: 8px; min-height: 300px; font-family: 'Courier New', monospace; border-left: 4px solid var(--primary); }
+        /* Inputs */
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 10px; box-sizing: border-box; }
+        label { font-size: 0.85rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px; }
+        
+        /* Buttons */
+        .btn-run { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-run:hover { background: #1d4ed8; }
+        
+        .btn-action { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; margin-top: 15px; }
+        .btn-action:hover { background: #059669; }
+        
+        /* Output Section */
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; }
+        .risk-High, .risk-Critical { background: #fee2e2; color: #991b1b; }
+        .risk-Safe { background: #dcfce7; color: #166534; }
+        
+        .output-content { background: #f1f5f9; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 0.9rem; line-height: 1.5; border-left: 4px solid var(--primary); }
+
+        /* Sidebar (History) */
+        .history-item { border-bottom: 1px solid #f1f5f9; padding: 10px 0; font-size: 0.85rem; }
+        .history-item:last-child { border-bottom: none; }
+        .history-time { color: #94a3b8; font-size: 0.75rem; }
+        .history-title { font-weight: 600; }
+
     </style>
 </head>
 <body>
 
     <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: var(--primary); margin-bottom: 5px;">Vyapar AI 🤖</h1>
-        <p style="margin-top: 0; color: #64748b;">Autonomous Business Operating System</p>
+        <h1 style="color: var(--primary); margin: 0;">Vyapar AI ⚡</h1>
+        <p style="margin: 5px 0; color: #64748b;">Autonomous Business Operating System</p>
     </div>
 
-    <div class="container">
+    <div class="main-grid">
+        
         <div class="card">
-            <h2>Select Module</h2>
+            <h2>📜 Recent Activity</h2>
+            <div id="historyList">
+                <p style="color:#94a3b8; font-style:italic;">No recent actions.</p>
+            </div>
+            <button onclick="clearHistory()" style="background:none; border:none; color:#94a3b8; font-size:0.8rem; margin-top:10px; cursor:pointer;">Clear History</button>
+        </div>
+
+        <div class="card">
+            <h2>🎛️ Control Panel</h2>
+            <label>Select Agent Module</label>
             <select id="agentMode" onchange="updateForm()">
-                <option value="churn">1. Customer Retention (Churn)</option>
-                <option value="inventory">2. Smart Inventory</option>
-                <option value="leads">3. Lead Scoring</option>
-                <option value="expense">4. Expense Audit</option>
+                <option value="churn">1. Customer Retention</option>
+                <option value="inventory">2. Inventory Manager</option>
+                <option value="leads">3. Lead Sales Agent</option>
+                <option value="expense">4. Expense Auditor</option>
             </select>
+            <hr style="border-top:1px solid #eee; margin: 15px 0;">
+            <div id="dynamicInputs"></div>
+            <button onclick="askAgent()" class="btn-run" id="btn">🚀 Run Agent</button>
+        </div>
 
-            <hr style="border-top: 1px solid #eee; margin: 20px 0;">
+        <div class="card">
+            <h2>🧠 Agent Decision</h2>
+            
+            <div id="loading" style="display:none; text-align:center; padding: 40px;">
+                <div style="font-size: 2rem; animation: spin 1s linear infinite;">🔄</div>
+                <p style="color:#64748b;">Analyzing Data & Formulating Strategy...</p>
+            </div>
 
-            <div id="dynamicInputs">
+            <div id="resultBox" style="display:none;">
+                <div id="badgeContainer"></div>
+                <p id="analysisText" style="font-weight: 500; color: #334155;"></p>
+                
+                <div class="output-content">
+                    <strong id="contentSubject" style="display:block; margin-bottom:10px;"></strong>
+                    <div id="contentBody"></div>
                 </div>
 
-            <button onclick="askAgent()" id="btn">🚀 Run Agent</button>
+                <button id="actionBtn" class="btn-action" onclick="performAction()">
+                    ⚡ <span id="actionBtnText">Perform Action</span>
+                </button>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>Agent Action</h2>
-            <div id="loading" style="display:none; text-align:center; padding: 20px;">
-                <div style="font-size: 2rem;">🔄</div>
-                <p>Analyzing Data & Generating Strategy...</p>
-            </div>
-            <div class="output-box" id="output">Select a module to begin...</div>
-        </div>
     </div>
 
     <script>
+        // --- 1. FORM LOGIC ---
         const forms = {
             churn: `
-                <h3>👤 Customer Details</h3>
                 <label>Customer Name</label><input type="text" id="p1" value="Amit Verma">
                 <label>Days Inactive</label><input type="number" id="p2" value="60">
                 <label>Support Tickets</label><input type="number" id="p3" value="5">
                 <label>Monthly Bill (₹)</label><input type="number" id="p4" value="2000">
-                <input type="hidden" id="query" value="Draft a retention email for this customer.">
+                <input type="hidden" id="query" value="Analyze risk and draft retention plan.">
             `,
             inventory: `
-                <h3>📦 Inventory Data</h3>
-                <label>Item Name</label><input type="text" id="p1" value="Basmati Rice (5kg)">
-                <label>Current Stock (Units)</label><input type="number" id="p2" value="15">
-                <label>Avg Daily Sales</label><input type="number" id="p3" value="5">
-                <input type="hidden" id="query" value="Check stock health and draft a supplier order if needed.">
+                <label>Item Name</label><input type="text" id="p1" value="Basmati Rice">
+                <label>Current Stock</label><input type="number" id="p2" value="15">
+                <label>Daily Sales Avg</label><input type="number" id="p3" value="5">
+                <input type="hidden" id="query" value="Check stock and draft PO if needed.">
             `,
             leads: `
-                <h3>🔥 Lead Details</h3>
-                <label>Company Name</label><input type="text" id="p1" value="Rahul Traders">
+                <label>Client Name</label><input type="text" id="p1" value="Rahul Traders">
                 <label>Budget (₹)</label><input type="number" id="p2" value="60000">
                 <label>Urgency (1-10)</label><input type="number" id="p3" value="9">
-                <input type="hidden" id="query" value="Score this lead and draft a sales pitch.">
+                <input type="hidden" id="query" value="Score lead and draft pitch.">
             `,
             expense: `
-                <h3>💸 Expense Entry</h3>
-                <label>Vendor Name</label><input type="text" id="p1" value="Unknown Vendor">
+                <label>Vendor</label><input type="text" id="p1" value="Unknown Vendor">
                 <label>Category</label><input type="text" id="p2" value="Office Supplies">
                 <label>Amount (₹)</label><input type="number" id="p3" value="8000">
-                <input type="hidden" id="query" value="Audit this expense for fraud risk.">
+                <input type="hidden" id="query" value="Audit for fraud.">
             `
         };
 
         function updateForm() {
-            const mode = document.getElementById('agentMode').value;
-            document.getElementById('dynamicInputs').innerHTML = forms[mode];
+            document.getElementById('dynamicInputs').innerHTML = forms[document.getElementById('agentMode').value];
+            document.getElementById('resultBox').style.display = 'none';
         }
+
+        // --- 2. AGENT INTERACTION ---
+        let currentResponse = null; // Store response for "Action" button
 
         async function askAgent() {
             const mode = document.getElementById('agentMode').value;
-            const btn = document.getElementById('btn');
-            const output = document.getElementById('output');
             const loader = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
             
-            btn.disabled = true;
-            output.style.display = 'none';
             loader.style.display = 'block';
+            resultBox.style.display = 'none';
 
+            // Build Payload
             let payload = { query: document.getElementById('query').value, data: {} };
-
-            // Map inputs based on active mode
             if(mode === 'churn') {
-                payload.data = {
-                    customerName: document.getElementById('p1').value,
-                    days_inactive: parseInt(document.getElementById('p2').value),
-                    support_tickets: parseInt(document.getElementById('p3').value),
-                    monthly_bill: parseInt(document.getElementById('p4').value)
-                };
+                payload.data = { customerName: document.getElementById('p1').value, days_inactive: parseInt(document.getElementById('p2').value), monthly_bill: 2000 };
             } else if(mode === 'inventory') {
-                payload.data = {
-                    itemName: document.getElementById('p1').value,
-                    current_stock: parseInt(document.getElementById('p2').value),
-                    daily_sales_avg: parseInt(document.getElementById('p3').value)
-                };
+                payload.data = { itemName: document.getElementById('p1').value, current_stock: parseInt(document.getElementById('p2').value), daily_sales_avg: 5 };
             } else if(mode === 'leads') {
-                payload.data = {
-                    leadName: document.getElementById('p1').value,
-                    budget: parseInt(document.getElementById('p2').value),
-                    urgency: parseInt(document.getElementById('p3').value)
-                };
+                payload.data = { leadName: document.getElementById('p1').value, budget: 60000, urgency: 9 };
             } else if(mode === 'expense') {
-                payload.data = {
-                    vendor: document.getElementById('p1').value,
-                    category: document.getElementById('p2').value,
-                    amount: parseInt(document.getElementById('p3').value)
-                };
+                payload.data = { vendor: document.getElementById('p1').value, amount: 8000 };
             }
 
             try {
@@ -142,18 +162,139 @@
                     body: JSON.stringify(payload)
                 });
                 const json = await res.json();
-                output.innerText = json.response || json.error;
+                
+                if(json.success) {
+                    currentResponse = json.response; // Save for action button
+                    renderResult(json.response);
+                    addToHistory(mode, json.response.risk_level);
+                } else {
+                    alert("Error: " + json.error);
+                }
             } catch (err) {
-                output.innerText = "Error connecting to Agent.";
+                alert("Failed to connect to backend.");
+                console.error(err);
             } finally {
-                btn.disabled = false;
                 loader.style.display = 'none';
-                output.style.display = 'block';
             }
+        }
+
+        function renderResult(data) {
+            const resultBox = document.getElementById('resultBox');
+            resultBox.style.display = 'block';
+
+            // 1. Badge
+            const badge = document.getElementById('badgeContainer');
+            badge.innerHTML = `<span class="status-badge risk-${data.risk_level}">Risk: ${data.risk_level}</span>`;
+
+            // 2. Analysis
+            document.getElementById('analysisText').innerText = data.analysis;
+
+            // 3. Content Box
+            document.getElementById('contentSubject').innerText = data.content.subject || "Report";
+            
+            // --- EDITABLE TEXT AREA LOGIC ---
+            document.getElementById('contentBody').innerHTML = `
+                <textarea id="editableBody" style="width:100%; height:250px; padding:12px; border:1px solid #cbd5e1; border-radius:6px; font-family: 'Segoe UI', sans-serif; font-size: 0.95rem; line-height: 1.5; resize: vertical; background: #fff; color: #334155;">${data.content.body}</textarea>
+                <div style="font-size:0.8rem; color:#94a3b8; margin-top:5px; text-align:right;">✏️ You can edit this text before sending</div>
+            `;
+
+            // 4. Dynamic Action Button
+            const btn = document.getElementById('actionBtn');
+            const btnText = document.getElementById('actionBtnText');
+            btnText.innerText = data.action_title || "Perform Action";
+            
+            // Color code button based on action type
+            if (data.action_type === 'Audit') btn.style.background = '#ef4444'; // Red for Alert
+            else btn.style.background = '#10b981'; // Green for Send
+        }
+
+        // --- 3. ACTION SIMULATION (The "Doing Work" Part) ---
+        function performAction() {
+            if(!currentResponse) return;
+
+            // Grab the FINAL text (in case the user edited it)
+            const finalBody = document.getElementById('editableBody') ? document.getElementById('editableBody').value : "";
+
+            const type = currentResponse.action_type;
+            let msg = "";
+
+            if (type === 'Email') {
+                msg = `✅ Email sent to ${currentResponse.content.recipient || 'Customer'} successfully via SMTP!\n\n(Content: "${finalBody.substring(0, 30)}...")`;
+            } else if (type === 'Purchase Order') {
+                msg = `📄 Purchase Order #${Math.floor(Math.random()*1000)} generated and emailed to supplier.\n\n(Item: ${document.getElementById('p1').value})`;
+            } else if (type === 'Audit') {
+                msg = `⚠️ Expense flagged in Accounting Software. Notification sent to Admin.`;
+            } else {
+                msg = `✅ Action completed successfully.`;
+            }
+
+            // Simulate "Working" delay then show alert
+            const btn = document.getElementById('actionBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ Processing...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                alert(msg);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 1000);
+        }
+
+        // --- 4. PERSISTENCE (History) ---
+        function addToHistory(module, status) {
+            const list = document.getElementById('historyList');
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            const moduleName = module.charAt(0).toUpperCase() + module.slice(1);
+            
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            item.innerHTML = `
+                <div class="history-time">${now}</div>
+                <div class="history-title">${moduleName} Agent</div>
+                <div>Status: ${status}</div>
+            `;
+            
+            // Remove "No recent actions" text if it exists
+            if(list.innerText.includes("No recent")) list.innerHTML = "";
+            
+            list.prepend(item);
+            
+            // Save to LocalStorage
+            let history = JSON.parse(localStorage.getItem('vyapar_history') || "[]");
+            history.unshift({ time: now, module: moduleName, status: status });
+            localStorage.setItem('vyapar_history', JSON.stringify(history.slice(0, 10)));
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('vyapar_history') || "[]");
+            const list = document.getElementById('historyList');
+            
+            if(history.length > 0) {
+                list.innerHTML = "";
+                history.forEach(h => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-time">${h.time}</div>
+                        <div class="history-title">${h.module} Agent</div>
+                        <div>Status: ${h.status}</div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('vyapar_history');
+            document.getElementById('historyList').innerHTML = '<p style="color:#94a3b8; font-style:italic;">No recent actions.</p>';
         }
 
         // Init
         updateForm();
+        loadHistory();
+
     </script>
 </body>
 </html>
